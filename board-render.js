@@ -6,7 +6,8 @@
 (function () {
   const NS = 'http://www.w3.org/2000/svg';
   const TEAM_COLOR = { ally: '#3ddc97', enemy: '#ff4655' };
-  const PLAYER_FOV = 103; // VALORANTの横の視野角（設定で変えられない固定値）
+  const PLAYER_FOV = 103; // VALORANTの横の視野角（設定で変えられない固定値。16:9のとき）
+  const VIEW_DEFAULT = 45; // 人の視界の扇の初期値（画面全体の103°は広すぎるとユーザーの指定、2026-11-13）
 
   function el(tag, attrs, parent) {
     const e = document.createElementNS(NS, tag);
@@ -147,7 +148,7 @@
         const a = agents[o.agent];
         const R = 17 * ui;
         // 人の視界（見ている向きと範囲）。キャラの丸の下に描く
-        if (typeof o.vlen === 'number') drawView(g, o.x, o.y, o.vrot || 0, o.vlen, o.vang || PLAYER_FOV, k, TEAM_COLOR[o.team] || '#ffffff');
+        if (typeof o.vlen === 'number') drawView(g, o.x, o.y, o.vrot || 0, o.vlen, o.vang || VIEW_DEFAULT, k, TEAM_COLOR[o.team] || '#ffffff');
         el('circle', { cx: o.x, cy: o.y, r: R, fill: 'rgba(10,16,22,0.9)' }, g);
         if (a) {
           const ig = el('g', null, g);
@@ -300,5 +301,5 @@
     return { root, layer, k };
   }
 
-  window.BoardRender = { PLAYER_FOV, drawView, render, unitsPerMeter, mapToUnits, geometryOf, agentColor, abilityStyle, moveHardMax, clampMove, TEAM_COLOR };
+  window.BoardRender = { PLAYER_FOV, VIEW_DEFAULT, drawView, render, unitsPerMeter, mapToUnits, geometryOf, agentColor, abilityStyle, moveHardMax, clampMove, TEAM_COLOR };
 })();

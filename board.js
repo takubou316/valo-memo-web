@@ -551,7 +551,7 @@ function effective(o, key) {
   }
   if (o.kind === 'agent' && typeof o.vlen === 'number') {
     if (key === 'vrot') return 0;
-    if (key === 'vang') return BoardRender.PLAYER_FOV;
+    if (key === 'vang') return BoardRender.VIEW_DEFAULT;
   }
   return undefined;
 }
@@ -820,15 +820,15 @@ function renderSel() {
     const vb = el('button', typeof o.vlen === 'number' ? 'on' : null, typeof o.vlen === 'number' ? '視界を消す' : '視界（見ている向き）を出す');
     vb.onclick = () => change(() => {
       if (typeof o.vlen === 'number') { delete o.vlen; delete o.vrot; delete o.vang; }
-      else { o.vlen = 20; o.vrot = typeof o.vrot === 'number' ? o.vrot : 0; o.vang = BoardRender.PLAYER_FOV; }
+      else { o.vlen = 20; o.vrot = typeof o.vrot === 'number' ? o.vrot : 0; o.vang = BoardRender.VIEW_DEFAULT; }
       renderSel();
     });
     body.append(vb);
     if (typeof o.vlen === 'number') {
-      body.append(el('div', 'dims', `扇＝見ている範囲（広さはゲームの視野角 ${BoardRender.PLAYER_FOV}°）。先の白い丸で向きと長さを動かせます`));
+      body.append(el('div', 'dims', `扇＝見ている範囲（初期値 ${BoardRender.VIEW_DEFAULT}°。画面の端から端まではゲームの視野角 ${BoardRender.PLAYER_FOV}°）。先の白い丸で向きと長さを動かせます`));
       body.append(slider('向き', 0, 359, 1, Math.round(((o.vrot || 0) % 360 + 360) % 360), '°', v => { o.vrot = v; }));
       body.append(slider('長さ', VIEW_LEN[0], VIEW_LEN[1], 0.5, o.vlen, 'm', v => { o.vlen = v; }));
-      body.append(slider('広さ', 10, 150, 1, o.vang || BoardRender.PLAYER_FOV, '°', v => { o.vang = v; }));
+      body.append(slider('広さ', 10, 150, 1, o.vang || BoardRender.VIEW_DEFAULT, '°', v => { o.vang = v; }));
     }
     body.append(delBtn);
   } else if (o.kind === 'ability') {

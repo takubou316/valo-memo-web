@@ -76,7 +76,7 @@
         // 視界の扇（vlen があるときだけ出す）: 向き vrot・長さ vlen(m)・広さ vang(度)
         if (num(o.vlen, 1, 150) !== null) {
           c.vlen = o.vlen; c.vrot = num(o.vrot, -3600, 3600) || 0;
-          c.vang = num(o.vang, 5, 179) !== null ? o.vang : 103;
+          c.vang = num(o.vang, 5, 179) !== null ? o.vang : 45; // 初期値（board-render の VIEW_DEFAULT と同じ）
         }
         break;
       case 'ability':
