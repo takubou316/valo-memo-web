@@ -386,6 +386,16 @@ function drawSelection(root) {
       // 視界の扇: 先端の丸で向きと長さをいっぺんに変える
       const L = (o.len != null ? o.len : geo.len) * k(), rad = (o.rot || 0) * Math.PI / 180;
       handle('vtip', o.x + Math.cos(rad) * L, o.y + Math.sin(rad) * L);
+    } else if (geo && geo.var && geo.s === 'wall') {
+      // 長さを変えられる壁（トラップワイヤー・フェニックスの壁など）: 両端の丸。片方を引くと反対の端は動かず、向きと長さがいっぺんに変わる
+      const L = (o.len != null ? o.len : geo.len) * k() / 2, rad = (o.rot || 0) * Math.PI / 180;
+      const dx = Math.cos(rad) * L, dy = Math.sin(rad) * L;
+      handle('end1', o.x - dx, o.y - dy); handle('end2', o.x + dx, o.y + dy);
+    } else if (geo && geo.var && geo.s === 'rect') {
+      // 長さを変えられる長方形（ブリーチのフォールトライン）: 先の端の丸で向きと長さ
+      const L = ((geo.off || 0) + (o.len != null ? o.len : geo.len)) * k(), rad = (o.rot || 0) * Math.PI / 180;
+      mk('line', { x1: o.x, y1: o.y, x2: o.x + Math.cos(rad) * L, y2: o.y + Math.sin(rad) * L, class: 'handle-line', 'vector-effect': 'non-scaling-stroke' });
+      handle('rtip', o.x + Math.cos(rad) * L, o.y + Math.sin(rad) * L);
     } else if (geo && DIRECTIONAL.has(geo.s)) {
       const D = 46 * S.vb.w / 1000 + 20, rad = (o.rot || 0) * Math.PI / 180;
       const hx = o.x + Math.cos(rad) * D, hy = o.y + Math.sin(rad) * D;
@@ -1002,6 +1012,23 @@ svg.addEventListener('pointermove', e => {
       else {
         const a = agentById(o.agent); const geo = a && BoardRender.geometryOf(a, o.slot); const v = (geo && geo.var) || VIEW_LEN;
         o.rot = Math.round(deg * 10) / 10; o.len = Math.round(Math.max(v[0], Math.min(v[1], m)) * 2) / 2;
+      }
+    }
+    else if (d.handle === 'end1' || d.handle === 'end2' || d.handle === 'rtip') {
+      const a = agentById(o.agent); const geo = a && BoardRender.geometryOf(a, o.slot);
+      if (geo && geo.var) {
+        const len0 = (o.len != null ? o.len : geo.len) * k(), r0 = (o.rot || 0) * Math.PI / 180;
+        // 動かさない側の点は押した瞬間に決めておく（長さの上限で止まったときに、反対の端がずれていかないように）
+        if (!d.fixed) d.fixed = d.handle === 'rtip' ? { x: o.x, y: o.y }
+          : { x: o.x + (d.handle === 'end2' ? -1 : 1) * Math.cos(r0) * len0 / 2, y: o.y + (d.handle === 'end2' ? -1 : 1) * Math.sin(r0) * len0 / 2 };
+        const F = d.fixed;
+        let deg = Math.atan2(p.y - F.y, p.x - F.x) * 180 / Math.PI; if (e.shiftKey) deg = Math.round(deg / 15) * 15;
+        const off = d.handle === 'rtip' ? (geo.off || 0) : 0;
+        const m = Math.hypot(p.x - F.x, p.y - F.y) / k() - off;
+        o.len = Math.round(Math.max(geo.var[0], Math.min(geo.var[1], m)) * 2) / 2;
+        const rad = deg * Math.PI / 180;
+        if (d.handle !== 'rtip') { o.x = F.x + Math.cos(rad) * o.len * k() / 2; o.y = F.y + Math.sin(rad) * o.len * k() / 2; }
+        o.rot = Math.round((d.handle === 'end1' ? deg + 180 : deg) * 10) / 10;
       }
     }
     else if (d.handle === 'p1') { o.x1 = p.x; o.y1 = p.y; }
