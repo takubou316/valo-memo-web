@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://media.valorant-api.com blob: data:; connect-src 'self' wss: https://valorant-api.com https://media.valorant-api.com blob:; style-src 'self'; script-src 'self'">
+<title>作戦ボード - valo-memo（ブラウザ版）</title>
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="board.css">
+<link rel="stylesheet" href="web.css">
+</head>
+<body>
+<div id="invite" class="invite" hidden>
+  <div class="invite-box">
+    <h1>作戦ボードに招待されています</h1>
+    <p>valo-memo のアプリを入れている人は「アプリで開く」、入れていない人は「ブラウザで参加」を押してください。</p>
+    <button id="invite-app" class="primary">アプリで開く</button>
+    <button id="invite-web">ブラウザで参加</button>
+    <p id="invite-after" hidden>アプリが開いたら、このページは閉じて大丈夫です。開かないときは「ブラウザで参加」を押してください。</p>
+  </div>
+</div>
+<div class="web-badge">valo-memo ブラウザ版（作戦はこのブラウザの中に保存されます）</div>
+<div id="app">
+  <!-- 左: マップと作戦の一覧 -->
+  <aside id="side">
+    <button id="map-btn" class="map-btn"><img id="map-thumb" alt=""><span><small>マップ</small><b id="map-name">読み込み中…</b></span><i>▼</i></button>
+    <div id="game-banner" class="banner" hidden></div>
+    <div class="side-head">
+      <span>このマップの作戦</span>
+      <button id="new-board" class="primary small">＋ 新しい作戦</button>
+    </div>
+    <div class="filter">
+      <label><input type="checkbox" id="filter-agent"> 下で選んでいるキャラの作戦だけ</label>
+    </div>
+    <ul id="board-list"></ul>
+    <div id="collab" class="collab"></div>
+    <div id="board-settings" hidden>
+      <div class="field"><label for="board-name">作戦の名前</label><input id="board-name" maxlength="80"></div>
+      <div class="field"><label>どのキャラの作戦か</label>
+        <button id="board-agent" class="chip-btn" title="押して変える"><img id="board-agent-img" alt=""><span id="board-agent-name">指定なし</span></button>
+        <small class="hint-text">試合でこのキャラを選ぶと、右端のメモのパネルにこの作戦が出ます。「指定なし」ならどのキャラでも出ます</small>
+      </div>
+      <div class="field"><label>攻め・守り</label>
+        <div class="seg" id="board-side">
+          <button data-side="atk">攻め</button><button data-side="def">守り</button><button data-side="">両方</button>
+        </div>
+      </div>
+      <div class="row-btns">
+        <button id="dup-board">複製</button>
+        <button id="del-board" class="danger">削除</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 中央: ツールとマップ -->
+  <section id="center">
+    <div id="toolbar">
+      <div class="tools" id="tools">
+        <button data-tool="select" title="選ぶ・動かす（V）"><span>↖</span>選ぶ</button>
+        <button data-tool="pen" title="手描き（P）"><span>✎</span>ペン</button>
+        <button data-tool="arrow" title="矢印（A）"><span>➜</span>矢印</button>
+        <button data-tool="line" title="直線（L）"><span>／</span>直線</button>
+        <button data-tool="rect" title="四角（R）"><span>▭</span>四角</button>
+        <button data-tool="ellipse" title="丸（O）"><span>◯</span>丸</button>
+        <button data-tool="text" title="文字（T）"><span>A</span>文字</button>
+        <button data-tool="lineup" title="ラインナップ（N）: 立ち位置→投げる先の順に2回クリック"><span>⌖</span>ラインナップ</button>
+        <button data-tool="eraser" title="消しゴム（E）: 触ったものを消す"><span>⌫</span>消しゴム</button>
+      </div>
+      <div class="sep"></div>
+      <div class="colors" id="colors"></div>
+      <select id="width" title="線の太さ"><option value="2">細い</option><option value="3" selected>ふつう</option><option value="6">太い</option></select>
+      <div class="sep"></div>
+      <button id="undo" title="取り消し（Ctrl+Z）">↶</button>
+      <button id="redo" title="やり直し（Ctrl+Y）">↷</button>
+      <div class="sep"></div>
+      <label class="toggle"><input type="checkbox" id="show-callouts" checked> 地点名</label>
+    </div>
+    <div id="stage">
+      <svg id="board" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="empty" class="empty" hidden>
+        <p>このマップの作戦はまだありません。</p>
+        <button id="empty-new" class="primary">＋ 新しい作戦を作る</button>
+      </div>
+      <div class="view-btns">
+        <button id="fit" title="マップ全体を表示（拡大はマウスホイール、移動は右ドラッグ）">全体を表示</button>
+        <button id="rotate" title="マップの向きを90°回す">⟳ 向きを回す</button>
+      </div>
+      <div id="scale" class="scale"><div id="scale-bar"></div><span id="scale-label">10m</span></div>
+      <div id="hint" class="hint"></div>
+      <input id="text-input" class="text-input" hidden>
+    </div>
+    <div id="agentbar">
+      <div class="team seg" id="team">
+        <button data-team="ally" class="ally">味方</button><button data-team="enemy" class="enemy">敵</button>
+      </div>
+      <div id="agents" class="agents"></div>
+      <div id="abilities" class="abilities"></div>
+    </div>
+  </section>
+
+  <!-- 右: 手順と選んだもの -->
+  <aside id="right">
+    <div class="panel">
+      <div class="panel-head">手順（シークエンス）</div>
+      <div id="steps" class="steps"></div>
+      <div class="row-btns">
+        <button id="add-step" title="今の手順をコピーして次の手順を作る">＋ 手順を追加</button>
+        <button id="del-step">この手順を削除</button>
+      </div>
+      <button id="play" class="primary wide">▶ 最初から再生</button>
+      <textarea id="step-note" placeholder="この手順のメモ（例: 2人でAメインを詰める）"></textarea>
+    </div>
+    <div class="panel" id="sel-panel">
+      <div class="panel-head">選んでいるもの</div>
+      <div id="sel-body" class="sel-body"><p class="muted">マップ上のものをクリックすると、ここで向き・長さ・文字などを変えられます。</p></div>
+    </div>
+    <div class="panel small-text">
+      <div id="scale-info" class="muted"></div>
+      <div class="muted">拡大・縮小はマウスホイール、見る場所の移動は右ドラッグ（または <kbd>Space</kbd>+ドラッグ）。消すのは <kbd>Delete</kbd>、取り消しは <kbd>Ctrl+Z</kbd></div>
+      <div class="muted">画像は <kbd>Ctrl+V</kbd> で貼れます（ラインナップを選んでいるときはそのラインナップに付きます）</div>
+    </div>
+    <div id="status" class="status"></div>
+  </aside>
+</div>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-box">
+    <div class="sheet-head"><span id="sheet-title"></span><button id="sheet-close">閉じる</button></div>
+    <div id="sheet-body" class="sheet-body"></div>
+  </div>
+</div>
+
+<script src="gamedata.js"></script>
+<script src="web-shim.js"></script>
+<script src="vendor/p2p.js"></script>
+<script src="board-schema.js"></script>
+<script src="collab.js"></script>
+<script src="abilities.js"></script>
+<script src="board-render.js"></script>
+<script src="board.js"></script>
+</body>
+</html>

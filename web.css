@@ -1,0 +1,7 @@
+/* ブラウザ版だけの見た目（招待の画面） */
+.invite { position: fixed; inset: 0; z-index: 60; background: rgba(10,16,22,.92); display: flex; align-items: center; justify-content: center; }
+.invite-box { background: var(--bg2); border: 1px solid var(--line); border-left: 3px solid var(--red); border-radius: 10px; padding: 22px; width: min(460px, 92vw); display: flex; flex-direction: column; gap: 12px; }
+.invite-box h1 { font-size: 18px; margin: 0; }
+.invite-box p { margin: 0; color: var(--sub); line-height: 1.6; }
+.invite-box button { padding: 10px; font-size: 14px; }
+.web-badge { position: fixed; right: 8px; bottom: 6px; font-size: 11px; color: var(--sub); pointer-events: none; }
