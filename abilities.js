@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 // 各スキルの「マップ上の形と実寸（メートル）」
 // 出典: VALORANT Wiki（valorant.fandom.com）の各スキルの Stats 表（2026-11-13取得、パッチ13.10時点）
 //   conf: 'game' = wikiで「Game files / パッチノート」確認済み ／ 'wiki' = wikiに数値はあるが未確認 ／
@@ -126,7 +126,7 @@ window.ABILITY_GEOMETRY = {
   'Killjoy|Ability2':{ s: 'cone', r: 20, angle: 100, kind: 'info', conf: 'est', note: '角度100°は確認済み、見える距離は目安', ring: [{ r: 40, label: '有効範囲（離れると停止）' }] },
   'Killjoy|Ultimate':{ s: 'circle', r: 32.5, kind: 'cc', conf: 'game', color: '#f2c230' },
   'Cypher|Ability1': { s: 'circle', r: 3.72, kind: 'smoke', conf: 'game', color: '#e6e6e6' },
-  'Cypher|Ability2': { s: 'view', len: 25, angle: 90, var: [3, 80], kind: 'info', conf: 'est', note: '扇＝カメラに映る範囲。先の白い丸を動かして向きと長さを変える（画角は公式の数値が無いので目安。広さは下で変えられます）' },
+  'Cypher|Ability2': { s: 'view', len: 25, angle: 60, var: [3, 80], kind: 'info', conf: 'est', note: '扇＝カメラに映る範囲。先の白い丸を動かして向きと長さを変える（画角は公式の数値が無いので、ミニマップに出る扇から約60°。広さは下で変えられます）' },
   'Cypher|Grenade':  { s: 'wall', len: 15, w: 0.4, var: [1, 15], kind: 'info', conf: 'game', note: 'ワイヤーは最大15m', color: '#cfd8ff' },
   'Cypher|Ultimate': { s: 'icon', kind: 'info' },
   'Chamber|Ability2':{ s: 'icon', kind: 'util', move: { type: 'tp', max: 18 }, note: 'アンカーから18m以内にいればアンカーへテレポート（矢印の先＝アンカー）', conf: 'game' },
