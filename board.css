@@ -178,3 +178,8 @@ kbd { background: var(--bg3); border-radius: 4px; padding: 0 4px; font-family: i
 .sheet-sub { margin: 14px 0 6px; font-size: 12px; color: var(--muted, #9aa5ad); }
 .role-opt img { width: 34px; height: 34px; padding: 5px; }
 img.role-icon { border-radius: 0 !important; padding: 2px; }
+
+/* 定点の画像（2026-11-14） */
+.img-stack { display: flex; flex-direction: column; gap: 8px; }
+.img-badge:hover circle:first-of-type { stroke: #fff; }
+

@@ -353,7 +353,7 @@ function draw(objectsOverride) {
   const map = curMap(); if (!map) return;
   const b = cur() || { steps: [{ objects: [] }], rot: S.viewRot };
   const { root } = BoardRender.render(svg, b, map, S.data, {
-    step: S.step, showCallouts: S.showCallouts, selectedId: S.selectedId, imgUrl,
+    step: S.step, showCallouts: S.showCallouts, selectedId: S.selectedId, imgUrl, badge: 1.5, // 定点の画像の印は押しやすいよう大きめ
     calloutPos: Array.isArray(calloutPosCache[map.uuid]) ? calloutPosCache[map.uuid] : null, ui: Math.min(1.4, Math.max(0.22, S.vb.w / 1000)),
     objects: objectsOverride
   });
@@ -861,7 +861,19 @@ function renderSel() {
       body.append(slider('広さ', 10, 150, 1, o.ang != null ? o.ang : geo.angle, '°', v => { o.ang = v; }));
     }
     if (geo.var && geo.s === 'circle') body.append(slider('半径', geo.var[0], geo.var[1], 0.25, o.r != null ? o.r : geo.r, 'm', v => { o.r = v; }));
-    body.append(teamSeg(), delBtn);
+    body.append(teamSeg());
+    // 定点の画像（2026-11-14 ユーザーの要望「定点があるスキルに画像を埋め込みたい、ぱっとクリックで開く」）
+    body.append(el('div', 'title small', '定点の画像'));
+    const imgs = el('div', 'imgs');
+    for (const f of o.images || []) {
+      const w = el('div', 'thumb'); const im = el('img'); im.src = imgUrl(f); im.onclick = () => showImages(o.images, f);
+      const x = el('button', 'x', '×'); x.title = 'この画像を外す';
+      x.onclick = () => change(() => { o.images = o.images.filter(g => g !== f); if (!o.images.length) delete o.images; syncAbilityImages(o); renderSel(); });
+      w.append(im, x); imgs.append(w);
+    }
+    const add = el('button', null, '画像を追加');
+    add.onclick = () => pickImageFile(name => { const b = cur(); const now = b && findObj(o.id); if (!now) return; snapshot(); now.images = [...(now.images || []), name]; syncAbilityImages(now); saveSoon(); renderSel(); draw(); });
+    body.append(el('div', 'dims', '置く場所・狙う場所のスクショを付けると、マップのカメラの印を押すだけで開けます（Ctrl+V でも貼れます）'), imgs, add, delBtn);
   } else if (o.kind === 'text') {
     const ta = el('textarea'); ta.value = o.text || ''; ta.rows = 2;
     let first = true;
@@ -906,6 +918,24 @@ function syncLineup(o, board) {
     x.title = o.title; x.note = o.note; x.images = [...(o.images || [])]; x.agent = o.agent; x.slot = o.slot;
   }
 }
+// スキルの定点の画像も、同じ作戦の全部の手順の写し（同じID）でそろえる
+function syncAbilityImages(o, board) {
+  const b = board || cur(); if (!b || !o || o.kind !== 'ability') return;
+  for (const st of b.steps) for (const x of st.objects) if (x !== o && x.id === o.id && x.kind === 'ability') {
+    if (o.images && o.images.length) x.images = [...o.images]; else delete x.images;
+  }
+}
+// ファイルを選んで画像として保存する（貼り付けが分からない人向け）
+function pickImageFile(done) {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/png,image/jpeg,image/webp,image/gif';
+  inp.onchange = async () => {
+    const file = inp.files && inp.files[0]; if (!file) return;
+    const r = await window.valo.saveImage(new Uint8Array(await file.arrayBuffer()), file.type);
+    if (!r.ok) { status('画像を保存できませんでした（' + r.error + '）', true); return; }
+    done(r.name); status('画像を付けました');
+  };
+  inp.click();
+}
 function deleteSelected() {
   const b = cur(); if (!b || !S.selectedId) return;
   snapshot();
@@ -938,6 +968,12 @@ svg.addEventListener('pointerdown', e => {
   }
   if (e.button !== 0 || !b) return;
   const p = toMap(e);
+  // 定点の画像のカメラの印: 押すとすぐ画像を開く（選択はするが動かさない）
+  const badge = e.target.closest && e.target.closest('.img-badge');
+  if (badge && !S.place) {
+    const o = findObj(badge.getAttribute('data-obj'));
+    if (o && o.images && o.images.length) { S.selectedId = o.id; renderSel(); draw(); showImages(o.images); return; }
+  }
   const handle = e.target.closest && e.target.getAttribute && e.target.getAttribute('data-handle');
   if (handle && S.selectedId) { snapshot(); S.drag = { type: 'handle', handle }; cap(e); return; }
   const hitG = e.target.closest && e.target.closest('g.obj');
@@ -1145,7 +1181,14 @@ document.addEventListener('paste', async e => {
   const stepOf = b => b && b.steps.find(st => st.id === stepId);
   const target = () => { const b = S.boards[boardId]; return stepOf(b) ? b : null; };
   const lineup = () => { const b = target(); return b && selId ? stepOf(b).objects.find(o => o.id === selId && o.kind === 'lineup') : null; };
+  const ability = () => { const b = target(); return b && selId ? stepOf(b).objects.find(o => o.id === selId && o.kind === 'ability') : null; };
   const snapFor = () => beginAction(target()); // 入れる直前に、取り消しのまとまりを始める
+  if (ability()) {
+    snapFor(); const a = ability();
+    a.images = [...(a.images || []), name];
+    syncAbilityImages(a, target());
+    saveSoon(target()); renderSel(); draw(); status('スキルに定点の画像を付けました（カメラの印を押すと開きます）'); return;
+  }
   if (lineup()) {
     snapFor(); const l = lineup();
     l.images = [...(l.images || []), name];
@@ -1169,6 +1212,13 @@ document.addEventListener('paste', async e => {
 function showImage(f) {
   const i = el('img', 'big-img'); i.src = imgUrl(f);
   openSheet('画像', i);
+}
+// 何枚かの画像をまとめて縦に並べて開く（first を一番上に）
+function showImages(list, first) {
+  const box = el('div', 'img-stack');
+  const order = first ? [first, ...list.filter(f => f !== first)] : list;
+  for (const f of order) { const i = el('img', 'big-img'); i.src = imgUrl(f); box.append(i); }
+  openSheet(list.length > 1 ? `定点の画像（${list.length}枚）` : '定点の画像', box);
 }
 
 // ---------- シート（マップ・キャラ選択） ----------

@@ -190,6 +190,8 @@
           upright(t, o.x, o.y, rot);
         }
         drawIcon(g, o.x, o.y, ab && ab.icon, TEAM_COLOR[o.team] || '#fff', 20 * ui, rot);
+        // 定点の画像（2026-11-14）: 画像が付いていたら右上にカメラの印。押すと画像が開く（class img-badge、data-obj にもののID）
+        if (Array.isArray(o.images) && o.images.length) drawImgBadge(g, o, ui * (ctx.badge || 1), rot);
         break;
       }
       case 'pen': {
@@ -234,6 +236,19 @@
       }
     }
     return g;
+  }
+
+  function drawImgBadge(parent, o, s, rot) {
+    const cx = o.x + 15 * s, cy = o.y - 15 * s;
+    const b = el('g', { class: 'img-badge', 'data-obj': o.id, cursor: 'pointer' }, parent);
+    el('title', null, b).textContent = '画像を見る（' + o.images.length + '枚）';
+    el('circle', { cx, cy, r: 9 * s, fill: '#f5c84c', stroke: '#0f1923', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke' }, b);
+    // カメラの形（本体＋レンズ）
+    el('rect', { x: cx - 5 * s, y: cy - 3 * s, width: 10 * s, height: 7 * s, rx: 1.5 * s, fill: '#0f1923' }, b);
+    el('rect', { x: cx - 2 * s, y: cy - 5 * s, width: 4 * s, height: 2.5 * s, fill: '#0f1923' }, b);
+    el('circle', { cx, cy: cy + 0.5 * s, r: 2 * s, fill: '#f5c84c' }, b);
+    upright(b, o.x, o.y, rot);
+    return b;
   }
 
   const markers = new WeakMap();
@@ -292,7 +307,7 @@
     }
     const layer = el('g', { class: 'objects' }, root);
     const objs = opts.objects || ((board.steps[opts.step || 0] || {}).objects || []);
-    const ctx = { map, agents, k, rot, ui: opts.ui || 1, imgUrl: opts.imgUrl || (f => 'vmimg://img/' + encodeURIComponent(f)), showRings: false };
+    const ctx = { map, agents, k, rot, ui: opts.ui || 1, badge: opts.badge || 1, imgUrl: opts.imgUrl || (f => 'vmimg://img/' + encodeURIComponent(f)), showRings: false };
     for (const o of objs) {
       ctx.showRings = opts.showRings === true || (opts.selectedId && opts.selectedId === o.id);
       ctx.opacity = o.__opacity;

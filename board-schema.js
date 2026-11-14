@@ -87,6 +87,8 @@
         if (num(o.r, 0, 100) !== null) c.r = o.r;
         if (num(o.ang, 5, 179) !== null) c.ang = o.ang; // 視界の扇（カメラ）の広さ
         if (num(o.tx) !== null && num(o.ty) !== null) { c.tx = o.tx; c.ty = o.ty; } // 移動系の行き先
+        // 定点の画像（2026-11-14）。付いているときだけ持つ（前の版の作戦の中身を変えないように）
+        if (Array.isArray(o.images)) { const im = o.images.filter(f => typeof f === 'string' && IMG_NAME.test(f)).slice(0, 20); if (im.length) c.images = im; }
         break;
       case 'pen': {
         if (!Array.isArray(o.points)) return null;
@@ -207,7 +209,7 @@
     const out = new Set();
     for (const s of board.steps) for (const o of s.objects) {
       if (o.kind === 'image' && IMG_NAME.test(o.file || '')) out.add(o.file);
-      if (o.kind === 'lineup' && Array.isArray(o.images)) for (const f of o.images) if (IMG_NAME.test(f)) out.add(f);
+      if ((o.kind === 'lineup' || o.kind === 'ability') && Array.isArray(o.images)) for (const f of o.images) if (IMG_NAME.test(f)) out.add(f);
     }
     return out;
   }
