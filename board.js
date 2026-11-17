@@ -19,6 +19,7 @@ const S = {
   showCallouts: true, undo: {}, redo: {}, drag: null, playing: null, lineupFrom: null, game: {}
 };
 
+const MAX_SPOT_IMAGES = 20; // 定点の画像の上限。board-schema と同じ（超えた分は保存時に黙って落ちるので、付ける前に止める）
 const uid = () => 'o' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 const newBoardId = () => (crypto.randomUUID ? crypto.randomUUID() : uid() + uid());
 const imgUrl = f => (window.valo.imgUrl ? window.valo.imgUrl(f) : 'vmimg://img/' + encodeURIComponent(f));
@@ -878,7 +879,19 @@ function renderSel() {
       w.append(im, x); imgs.append(w);
     }
     const add = el('button', null, '画像を追加');
-    add.onclick = () => pickImageFile(name => { const b = cur(); const now = b && findObj(o.id); if (!now) return; snapshot(); now.images = [...(now.images || []), name]; syncAbilityImages(now); saveSoon(); renderSel(); draw(); });
+    // 付ける先（作戦・手順・スキル）は押した瞬間に決める。選んでいる間に作戦を切り替えても、そこへ付ける（Codexレビュー）
+    const boardId = S.boardId, stepId = S.stepId, objId = o.id;
+    add.onclick = () => {
+      if ((o.images || []).length >= MAX_SPOT_IMAGES) { status(`画像は1つのスキルに${MAX_SPOT_IMAGES}枚までです`, true); return; }
+      pickImageFile(name => {
+        const b = S.boards[boardId], st = b && b.steps.find(s => s.id === stepId);
+        const now = st && st.objects.find(x => x.id === objId && x.kind === 'ability');
+        if (!now) { status('付ける先のスキルが無くなったため、画像を付けられませんでした', true); return false; }
+        if ((now.images || []).length >= MAX_SPOT_IMAGES) { status(`画像は1つのスキルに${MAX_SPOT_IMAGES}枚までです`, true); return false; }
+        beginAction(b); now.images = [...(now.images || []), name]; syncAbilityImages(now, b); saveSoon(b); renderSel(); draw();
+        return true;
+      });
+    };
     body.append(el('div', 'dims', '置く場所・狙う場所のスクショを付けると、マップのカメラの印を押すだけで開けます（Ctrl+V でも貼れます）'), imgs, add, delBtn);
   } else if (o.kind === 'text') {
     const ta = el('textarea'); ta.value = o.text || ''; ta.rows = 2;
@@ -938,7 +951,7 @@ function pickImageFile(done) {
     const file = inp.files && inp.files[0]; if (!file) return;
     const r = await window.valo.saveImage(new Uint8Array(await file.arrayBuffer()), file.type);
     if (!r.ok) { status('画像を保存できませんでした（' + r.error + '）', true); return; }
-    done(r.name); status('画像を付けました');
+    if (done(r.name) !== false) status('画像を付けました'); // 付けられなかったときは done の側で知らせる
   };
   inp.click();
 }
@@ -1190,6 +1203,7 @@ document.addEventListener('paste', async e => {
   const ability = () => { const b = target(); return b && selId ? stepOf(b).objects.find(o => o.id === selId && o.kind === 'ability') : null; };
   const snapFor = () => beginAction(target()); // 入れる直前に、取り消しのまとまりを始める
   if (ability()) {
+    if ((ability().images || []).length >= MAX_SPOT_IMAGES) { status(`画像は1つのスキルに${MAX_SPOT_IMAGES}枚までです`, true); return; }
     snapFor(); const a = ability();
     a.images = [...(a.images || []), name];
     syncAbilityImages(a, target());
