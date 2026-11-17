@@ -183,3 +183,8 @@ img.role-icon { border-radius: 0 !important; padding: 2px; }
 .img-stack { display: flex; flex-direction: column; gap: 8px; }
 .img-badge:hover circle:first-of-type { stroke: #fff; }
 
+
+.thumb-cell { display: flex; align-items: center; gap: 6px; width: 100%; } /* 画像の右に名前の欄 */
+.img-note { flex: 1; min-width: 0; font-size: 12px; padding: 3px 5px; }
+.img-cap { font-size: 14px; font-weight: 700; color: #f5c84c; }
+

@@ -873,10 +873,25 @@ function renderSel() {
     body.append(el('div', 'title small', '定点の画像'));
     const imgs = el('div', 'imgs');
     for (const f of o.images || []) {
-      const w = el('div', 'thumb'); const im = el('img'); im.src = imgUrl(f); im.onclick = () => showImages(o.images, f);
+      const w = el('div', 'thumb'); const im = el('img'); im.src = imgUrl(f); im.onclick = () => showImages(o.images, f, o.imgNotes);
       const x = el('button', 'x', '×'); x.title = 'この画像を外す';
-      x.onclick = () => change(() => { o.images = o.images.filter(g => g !== f); if (!o.images.length) delete o.images; syncAbilityImages(o); renderSel(); });
-      w.append(im, x); imgs.append(w);
+      x.onclick = () => change(() => {
+        o.images = o.images.filter(g => g !== f);
+        if (o.imgNotes) { delete o.imgNotes[f]; if (!Object.keys(o.imgNotes).length) delete o.imgNotes; }
+        if (!o.images.length) { delete o.images; delete o.imgNotes; }
+        syncAbilityImages(o); renderSel();
+      });
+      // 画像の名前（例「箱上・立ち位置」）。パネルの一覧と開いた画像の見出しに出る
+      const nm = el('input', 'img-note'); nm.maxLength = 40; nm.placeholder = '名前（例: 箱上・立ち位置）'; nm.value = (o.imgNotes && o.imgNotes[f]) || '';
+      let first = true;
+      nm.oninput = () => {
+        if (first) { snapshot(); first = false; }
+        const v = nm.value.trim();
+        if (v) o.imgNotes = { ...(o.imgNotes || {}), [f]: nm.value.slice(0, 40) };
+        else if (o.imgNotes) { delete o.imgNotes[f]; if (!Object.keys(o.imgNotes).length) delete o.imgNotes; }
+        syncAbilityImages(o); saveSoon();
+      };
+      const cell = el('div', 'thumb-cell'); w.append(im, x); cell.append(w, nm); imgs.append(cell);
     }
     const add = el('button', null, '画像を追加');
     // 付ける先（作戦・手順・スキル）は押した瞬間に決める。選んでいる間に作戦を切り替えても、そこへ付ける（Codexレビュー）
@@ -942,6 +957,7 @@ function syncAbilityImages(o, board) {
   const b = board || cur(); if (!b || !o || o.kind !== 'ability') return;
   for (const st of b.steps) for (const x of st.objects) if (x !== o && x.id === o.id && x.kind === 'ability') {
     if (o.images && o.images.length) x.images = [...o.images]; else delete x.images;
+    if (o.imgNotes && Object.keys(o.imgNotes).length) x.imgNotes = { ...o.imgNotes }; else delete x.imgNotes;
   }
 }
 // ファイルを選んで画像として保存する（貼り付けが分からない人向け）
@@ -991,7 +1007,7 @@ svg.addEventListener('pointerdown', e => {
   const badge = e.target.closest && e.target.closest('.img-badge');
   if (badge && !S.place) {
     const o = findObj(badge.getAttribute('data-obj'));
-    if (o && o.images && o.images.length) { S.selectedId = o.id; renderSel(); draw(); showImages(o.images); return; }
+    if (o && o.images && o.images.length) { S.selectedId = o.id; renderSel(); draw(); showImages(o.images, null, o.imgNotes); return; }
   }
   const handle = e.target.closest && e.target.getAttribute && e.target.getAttribute('data-handle');
   if (handle && S.selectedId) { snapshot(); S.drag = { type: 'handle', handle }; cap(e); return; }
@@ -1234,10 +1250,13 @@ function showImage(f) {
   openSheet('画像', i);
 }
 // 何枚かの画像をまとめて縦に並べて開く（first を一番上に）
-function showImages(list, first) {
+function showImages(list, first, notes) {
   const box = el('div', 'img-stack');
   const order = first ? [first, ...list.filter(f => f !== first)] : list;
-  for (const f of order) { const i = el('img', 'big-img'); i.src = imgUrl(f); box.append(i); }
+  for (const f of order) {
+    if (notes && notes[f]) box.append(el('div', 'img-cap', notes[f]));
+    const i = el('img', 'big-img'); i.src = imgUrl(f); box.append(i);
+  }
   openSheet(list.length > 1 ? `定点の画像（${list.length}枚）` : '定点の画像', box);
 }
 

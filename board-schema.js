@@ -89,6 +89,12 @@
         if (num(o.tx) !== null && num(o.ty) !== null) { c.tx = o.tx; c.ty = o.ty; } // 移動系の行き先
         // 定点の画像（2026-11-14）。付いているときだけ持つ（前の版の作戦の中身を変えないように）
         if (Array.isArray(o.images)) { const im = o.images.filter(f => typeof f === 'string' && IMG_NAME.test(f)).slice(0, 20); if (im.length) c.images = im; }
+        // 画像ごとの名前（例「箱上・立ち位置」）{ ファイル名: 名前 }。付いている画像の分だけ、40文字まで（2026-11-17）
+        if (c.images && isPlainObject(o.imgNotes)) {
+          const nt = {};
+          for (const f of c.images) if (typeof o.imgNotes[f] === 'string' && o.imgNotes[f].trim()) nt[f] = str(o.imgNotes[f], 40);
+          if (Object.keys(nt).length) c.imgNotes = nt;
+        }
         break;
       case 'pen': {
         if (!Array.isArray(o.points)) return null;
