@@ -207,7 +207,8 @@
       case 'rect': el('rect', { x: Math.min(o.x1, o.x2), y: Math.min(o.y1, o.y2), width: Math.abs(o.x2 - o.x1), height: Math.abs(o.y2 - o.y1), ...stroke, fill: o.fill ? color + '33' : 'none' }, g); break;
       case 'ellipse': el('ellipse', { cx: (o.x1 + o.x2) / 2, cy: (o.y1 + o.y2) / 2, rx: Math.abs(o.x2 - o.x1) / 2, ry: Math.abs(o.y2 - o.y1) / 2, ...stroke, fill: o.fill ? color + '33' : 'none' }, g); break;
       case 'text': {
-        const t = el('text', { x: o.x, y: o.y, fill: color, 'font-size': o.size || 22, 'stroke-width': (o.size || 22) * 0.18, class: 'board-text' }, g);
+        const fs = (o.size || 22) * (ctx.textScale || 1); // パネルで寄せたとき、文字は画面上の大きさを保つ（2026-11-17）
+        const t = el('text', { x: o.x, y: o.y, fill: color, 'font-size': fs, 'stroke-width': fs * 0.18, class: 'board-text' }, g);
         t.textContent = o.text || '';
         upright(t, o.x, o.y, rot);
         break;
@@ -307,7 +308,7 @@
     }
     const layer = el('g', { class: 'objects' }, root);
     const objs = opts.objects || ((board.steps[opts.step || 0] || {}).objects || []);
-    const ctx = { map, agents, k, rot, ui: opts.ui || 1, badge: opts.badge || 1, imgUrl: opts.imgUrl || (f => 'vmimg://img/' + encodeURIComponent(f)), showRings: false };
+    const ctx = { map, agents, k, rot, ui: opts.ui || 1, badge: opts.badge || 1, textScale: opts.textScale || 1, imgUrl: opts.imgUrl || (f => 'vmimg://img/' + encodeURIComponent(f)), showRings: false };
     for (const o of objs) {
       ctx.showRings = opts.showRings === true || (opts.selectedId && opts.selectedId === o.id);
       ctx.opacity = o.__opacity;
