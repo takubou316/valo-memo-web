@@ -278,7 +278,7 @@
     const k = unitsPerMeter(map);
     if (opts.showCallouts && map.callouts) {
       const cl = el('g', { class: 'callouts' }, root);
-      const ui = opts.ui || 1;
+      const ui = (opts.ui || 1) * (opts.calloutScale || 1); // パネルは小さいので地点名だけ大きめに（calloutScale）
       const pos = opts.calloutPos || map.callouts; // 通路の上に寄せた位置（無ければデータそのまま）
       const rad = rot * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad);
       const toScreen = (x, y) => ({ x: (x - 500) * cos - (y - 500) * sin + 500, y: (x - 500) * sin + (y - 500) * cos + 500 });

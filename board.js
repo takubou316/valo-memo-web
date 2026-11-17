@@ -1421,7 +1421,9 @@ function applyParams(p, first) {
   }
   const gameMap = S.game.mapUrl && S.data.maps.find(x => x.mapUrl.toLowerCase() === S.game.mapUrl.toLowerCase());
   if (p.agent && agentById(p.agent)) S.agent = p.agent;
-  const target = (p.boardId && S.boards[p.boardId] && S.boards[p.boardId].mapUuid) || (p.mapUuid && mapById(p.mapUuid) && p.mapUuid)
+  // マップの指定（p.mapUuid）があれば、それを一番に使う。作戦の指定は同じマップのときだけ（違うマップの作戦が来ても、指定のマップを開く）
+  if (p.boardId && p.mapUuid && S.boards[p.boardId] && S.boards[p.boardId].mapUuid !== p.mapUuid) p = { ...p, boardId: null };
+  const target = (p.mapUuid && mapById(p.mapUuid) && p.mapUuid) || (p.boardId && S.boards[p.boardId] && S.boards[p.boardId].mapUuid)
     || (first && ((gameMap && gameMap.uuid) || localStorage.getItem('vb_map'))) || S.mapUuid
     || (S.data.maps.find(m => RANKED_POOL.includes(shortName(m))) || S.data.maps[0]).uuid;
   setMap(mapById(target) ? target : S.data.maps[0].uuid);
