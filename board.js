@@ -508,6 +508,11 @@ function duplicateBoard() {
 }
 
 // ---------- 手順 ----------
+// 手順のボタンの名前: 番号＋メモの1行目（2026-11-17 ユーザーは手順を「A攻め」「B攻め」のように使い分けている）
+function stepLabel(s, i) {
+  const t = String(s.note || '').split('\n').map(x => x.trim()).find(Boolean) || '';
+  return t ? `${i + 1} ${t.length > 12 ? t.slice(0, 12) + '…' : t}` : String(i + 1);
+}
 function renderSteps() {
   const b = cur();
   const box = $('steps'); box.textContent = '';
@@ -516,7 +521,8 @@ function renderSteps() {
   if (S.step >= b.steps.length) S.step = b.steps.length - 1;
   S.stepId = b.steps[S.step] && b.steps[S.step].id; // 見ている手順を ID でも覚える（他の人の変更で並びが変わっても保つ）
   b.steps.forEach((s, i) => {
-    const btn = el('button', i === S.step ? 'on' : '', String(i + 1));
+    const btn = el('button', i === S.step ? 'on' : '', stepLabel(s, i));
+    btn.title = s.note || '';
     btn.onclick = () => { stopPlay(); S.step = i; S.selectedId = null; renderAll(); };
     box.append(btn);
   });
@@ -1329,6 +1335,8 @@ async function boot() {
     if (!st) { $('step-note').blur(); renderSteps(); return; }
     if (noteSnap) { snapshot(); noteSnap = false; }
     st.note = $('step-note').value; saveSoon();
+    const i = b.steps.indexOf(st), btn = $('steps').children[i];
+    if (btn) { btn.textContent = stepLabel(st, i); btn.title = st.note || ''; } // 打ちながら手順のボタンの名前も変える
   };
   $('step-note').onblur = () => { noteSnap = true; };
   $('sheet-close').onclick = closeSheet;

@@ -108,7 +108,7 @@ kbd { background: var(--bg3); border-radius: 4px; padding: 0 4px; font-family: i
 .panel { display: flex; flex-direction: column; gap: 6px; }
 .panel-head { font-weight: 700; }
 .steps { display: flex; flex-wrap: wrap; gap: 4px; }
-.steps button { width: 34px; padding: 4px 0; }
+.steps button { min-width: 34px; padding: 4px 8px; white-space: nowrap; } /* メモの1行目を名前として出すので幅は中身に合わせる */
 .steps button.on { background: var(--red); border-color: var(--red); color: #fff; }
 #step-note { min-height: 54px; }
 .sel-body { display: flex; flex-direction: column; gap: 8px; }
